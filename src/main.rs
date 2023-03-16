@@ -16,6 +16,7 @@ fn main() {
         .version("1.0")
         .about("Your personal directory door man")
         .arg_required_else_help(true)
+        .allow_external_subcommands(true)
         .subcommands([
             Command::new("add").about("Adds a new directory"),
             Command::new("ls").about("Prints all directories"),
@@ -44,8 +45,30 @@ fn main() {
                 println!("{} -> {}", key, value);
             }
         }
+        Some((ext, _)) => {
+            if move_directory(ext) {
+                println!("Value not found!");
+            }
+        }
         _ => unreachable!(),
     }
+}
+
+fn move_directory(base: &str) -> bool {
+    let data = load_data();
+    for (key, value) in &data.entries {
+        if key == base {
+            println!("{} -> {}", key, value);
+            let output = std::process::Command::new("cd")
+                .arg(value)
+                .output()
+                .expect("Failed to move command");
+
+            println!("{}", String::from_utf8_lossy(&output.stdout));
+            return false;
+        }
+    }
+    true
 }
 
 fn load_data() -> Data {
