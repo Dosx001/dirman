@@ -1,6 +1,10 @@
 use clap::Command;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, fs::OpenOptions};
+use std::{
+    collections::BTreeMap,
+    fs::{self, OpenOptions},
+    path::PathBuf,
+};
 
 #[derive(Serialize, Deserialize)]
 struct Data {
@@ -30,6 +34,7 @@ fn main() {
                 .to_string();
             let value = path.to_str().unwrap().to_string();
             let mut data = load_data();
+            println!("{:?}, {:?}", key, value);
             data.entries.insert(key, value);
             save_data(&data);
         }
@@ -44,11 +49,18 @@ fn main() {
 }
 
 fn load_data() -> Data {
+    let mut dir_path = PathBuf::new();
+    dir_path.push(dirs::home_dir().expect("Failed to get home directory"));
+    dir_path.push(".dm");
+    if !dir_path.exists() {
+        fs::create_dir_all(&dir_path).unwrap();
+    }
+    let path = dir_path.join("data.json");
     let file = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
-        .open("target/dm.json")
+        .open(path)
         .unwrap();
     serde_json::from_reader(&file).unwrap_or_else(|_| Data {
         entries: BTreeMap::new(),
@@ -56,11 +68,18 @@ fn load_data() -> Data {
 }
 
 fn save_data(data: &Data) {
+    let mut dir_path = PathBuf::new();
+    dir_path.push(dirs::home_dir().expect("Failed to get home directory"));
+    dir_path.push(".dm");
+    if !dir_path.exists() {
+        fs::create_dir_all(&dir_path).unwrap();
+    }
+    let path = dir_path.join("data.json");
     let file = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
-        .open("target/dm.json")
+        .open(path)
         .unwrap();
     serde_json::to_writer_pretty(&file, data).unwrap();
 }
