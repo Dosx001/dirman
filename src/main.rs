@@ -19,6 +19,9 @@ fn main() {
         .allow_external_subcommands(true)
         .subcommands([
             Command::new("add").about("Adds a new directory"),
+            Command::new("rm")
+                .about("Removes a directory")
+                .allow_external_subcommands(true),
             Command::new("ls").about("Prints all directories"),
         ])
         .get_matches();
@@ -35,9 +38,17 @@ fn main() {
                 .to_string();
             let value = path.to_str().unwrap().to_string();
             let mut data = load_data();
-            println!("{:?}, {:?}", key, value);
+            println!("{:?} -> {:?}", key, value);
             data.entries.insert(key, value);
             save_data(&data);
+        }
+        Some(("rm", args)) => {
+            let key = args.subcommand().unwrap().0;
+            let mut data = load_data();
+            if data.entries.remove(key).is_some() {
+                save_data(&data);
+                println!("Remove {}", key);
+            }
         }
         Some(("ls", _)) => {
             let data = load_data();
