@@ -23,6 +23,9 @@ fn main() {
                 .about("Removes a directory")
                 .allow_external_subcommands(true),
             Command::new("ls").about("Prints all directories"),
+            Command::new("_get")
+                .hide(true)
+                .allow_external_subcommands(true),
         ])
         .get_matches();
 
@@ -55,6 +58,10 @@ fn main() {
             for (key, value) in &data.entries {
                 println!("{} -> {}", key, value);
             }
+        }
+        Some(("_get", args)) => {
+            let key = args.subcommand().unwrap().0;
+            println!("{}", load_data().entries.get(key).unwrap());
         }
         Some((ext, _)) => {
             if move_directory(ext) {
