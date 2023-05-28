@@ -1,4 +1,5 @@
-use clap::Command;
+use clap::{value_parser, Arg, ArgAction, Command};
+use clap_complete::{generate, Generator, Shell};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -12,23 +13,12 @@ struct Json {
 }
 
 fn main() {
-    let matches = Command::new("dm")
-        .version("1.0")
-        .about("Your personal directory door man")
-        .arg_required_else_help(true)
-        .allow_external_subcommands(true)
-        .subcommands([
-            Command::new("add").about("Adds a new directory"),
-            Command::new("rm")
-                .about("Removes a directory")
-                .allow_external_subcommands(true),
-            Command::new("ls").about("Prints all directories"),
-            Command::new("_get")
-                .hide(true)
-                .allow_external_subcommands(true),
-        ])
-        .get_matches();
-
+    let matches = build_cli().get_matches();
+    if let Some(generator) = matches.get_one::<Shell>("generator").copied() {
+        let mut cmd = build_cli();
+        eprintln!("Generating completion file for {generator}...");
+        print_completions(generator, &mut cmd);
+    }
     match matches.subcommand() {
         Some(("add", _)) => {
             let path = std::env::current_dir().unwrap();
@@ -68,8 +58,38 @@ fn main() {
                 println!("Value not found!");
             }
         }
-        _ => unreachable!(),
+        _ => {
+            println!("Invalid command");
+        }
     }
+}
+
+fn build_cli() -> Command {
+    Command::new("dm")
+        .version("1.0")
+        .about("Your personal directory door man")
+        .arg_required_else_help(true)
+        .allow_external_subcommands(true)
+        .subcommands([
+            Command::new("add").about("Adds a new directory"),
+            Command::new("rm")
+                .about("Removes a directory")
+                .allow_external_subcommands(true),
+            Command::new("ls").about("Prints all directories"),
+            Command::new("_get")
+                .hide(true)
+                .allow_external_subcommands(true),
+        ])
+        .arg(
+            Arg::new("generator")
+                .long("generate")
+                .action(ArgAction::Set)
+                .value_parser(value_parser!(Shell)),
+        )
+}
+
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut std::io::stdout());
 }
 
 fn move_directory(base: &str) -> bool {
