@@ -7,7 +7,7 @@ use std::{
 };
 
 #[derive(Serialize, Deserialize)]
-struct Data {
+struct Json {
     entries: BTreeMap<String, String>,
 }
 
@@ -89,7 +89,7 @@ fn move_directory(base: &str) -> bool {
     true
 }
 
-fn load_data() -> Data {
+fn load_data() -> Json {
     let mut dir_path = PathBuf::new();
     dir_path.push(dirs::home_dir().expect("Failed to get home directory"));
     dir_path.push(".dm");
@@ -103,12 +103,12 @@ fn load_data() -> Data {
         .create(true)
         .open(path)
         .unwrap();
-    serde_json::from_reader(&file).unwrap_or_else(|_| Data {
+    serde_json::from_reader(&file).unwrap_or_else(|_| Json {
         entries: BTreeMap::new(),
     })
 }
 
-fn save_data(data: &Data) {
+fn save_data(data: &Json) {
     let mut dir_path = PathBuf::new();
     dir_path.push(dirs::home_dir().expect("Failed to get home directory"));
     dir_path.push(".dm");
